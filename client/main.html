@@ -3,7 +3,6 @@
 </head>
 
 <body>
-  <h1>dragula</h1>
   {{> dragList}}
 </body>
 
@@ -16,11 +15,10 @@
 <template name="dragList">
 <div class='examples'>
   <div class='parent'>
-    <label for='hy'>Move stuff between these two containers. Note how the stuff gets inserted near the mouse pointer? Great stuff.</label>
     <div class='wrapper'>
       <div id='left1' class='container'>
         {{#each items}}
-        <div>{{name}}</div>
+        <div style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
         {{/each}}
       </div>
       <div id='right1' class='container'>
