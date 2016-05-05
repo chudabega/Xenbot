@@ -13,17 +13,43 @@
 
 
 <template name="dragList">
-<div class='examples'>
+  <div class="row root">
+    <div id='left1' class="col container">
+      <div class="row">
+        <div class="col container">
+          <div class="el">1</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col container">
+        </div>
+      </div>
+      <div class="el">2</div>
+      <div class="el">3</div>
+      <div class="el">4</div>
+      {{#each items}}
+        <div class='el' style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
+      {{/each}}
+    </div>
+    <div class="col container">
+    </div>
+  </div>
+<!-- <div class='examples'>
   <div class='parent'>
     <div class='wrapper'>
-      <div id='left1' class='container'>
+      <div id='left1' class='dropzone container'>
         {{#each items}}
-        <div style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
+        <div class='item' style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
         {{/each}}
+        <div class="row">
+          <div class="col container">
+            <div class="el">2</div>
+          </div>
+        </div>
       </div>
-      <div id='right1' class='container'>
+      <div id='right1' class='dropzone container'>
       </div>
     </div>
   </div>
-</div>
+</div> -->
 </template>

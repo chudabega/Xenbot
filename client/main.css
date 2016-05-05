@@ -128,20 +128,31 @@ button:hover {
 .wrapper {
   display: table;
 }
-.container {
+.dropzone {
   display: table-cell;
   background-color: rgba(255, 255, 255, 0.2);
   width: 50%;
 }
-.container:nth-child(odd) {
+.dropzone:nth-child(odd) {
   background-color: rgba(0, 0, 0, 0.2);
 }
 /*
  * note that styling gu-mirror directly is a bad practice because it's too generic.
  * you're better off giving the draggable elements a unique class and styling that directly!
  */
-.container div,
+.dropzone div,
 .gu-mirror {
+  /*margin: 10px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: opacity 0.4s ease-in-out;
+  cursor: move;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;*/
+}
+
+.item {
   margin: 10px;
   padding: 10px;
   background-color: rgba(0, 0, 0, 0.2);
@@ -156,10 +167,10 @@ button:hover {
   cursor: -moz-grabbing;
   cursor: -webkit-grabbing;
 }
-.container .ex-moved {
+.dropzone .ex-moved {
   background-color: #e74c3c;
 }
-.container.ex-over {
+.dropzone.ex-over {
   background-color: rgba(255, 255, 255, 0.3);
 }
 .handle {
@@ -167,4 +178,26 @@ button:hover {
   margin-right: 5px;
   background-color: rgba(0, 0, 0, 0.4);
   cursor: move;
+}
+
+.row {
+    display:flex;
+    background:orange;
+    padding-top:.5em;
+    margin:1px;
+}
+.root {
+    padding:0;
+}
+.col {
+    background:#f7f7f7;
+    flex:1;
+    margin:1px;
+    min-height:1em;
+}
+.el {
+    background:#e5e5e5;
+    margin:1px;
+    min-height:2em;
+    color:black;
 }
