@@ -201,3 +201,6 @@ button:hover {
     min-height:2em;
     color:black;
 }
+[grabbed] {
+  background-color: blue !important;
+}
