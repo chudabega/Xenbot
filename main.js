@@ -3,6 +3,11 @@ import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
 
 Items = new Meteor.Collection('items');
+Pages = new Meteor.Collection('pages');
+Elements = new Meteor.Collection('elements');
+Events = new Meteor.Collection('events');
+Validators = new Meteor.Collection('validators');
+Converters = new Meteor.Collection('converters');
 
 if (Meteor.isClient) {
 	Template.dragList.helpers({
@@ -207,7 +212,7 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 	Meteor.startup(() => {
-		Items.remove({});
+		//Items.remove({});
 		if (Items.find({}).count() === 0) {
 			Items.insert({name:'Text Box', bgcolor: 'black', color:'red', id:1});
 			Items.insert({name:'Drop Down List', bgcolor: 'black', color:'blue', id:2});
@@ -225,6 +230,220 @@ if (Meteor.isServer) {
 			//_(20).times(function(n) {
 			//	Items.insert({name:'Item'+n,number:n});
 			//});
+		}
+
+		//Fields that elements should have access to
+		//Defaults
+		//tabInd: true
+		//maxLen: false
+		//disable: true
+		//event: null
+		//validators: null
+		//nullMsg: true
+		//orientation: false
+		//option: null
+		//a4j: false //choice to turn off ajax for event
+		//default: true //all the default options
+		//value: true
+		//list: false //drop down list select items
+		Elements.remove({});
+		if (Elements.find({}).count() === 0) {
+			Elements.insert({
+				eid: 't',
+				type: 'item',
+				name: 'Text Box',
+				maxLen: true,
+				events: [1,2,6,7,8],
+				validators: [],
+				converters: []
+			});
+			Elements.insert({
+				eid: 'd',
+				type: 'item',
+				name: 'Drop Down',
+				list: true,
+				events: [2]
+			});
+			Elements.insert({
+				eid: 'a',
+				type: 'item',
+				name: 'Hyper Link',
+				events: [3]
+			});
+			Elements.insert({
+				eid: 'o',
+				type: 'item',
+				name: 'Output Text',
+				tabInd: false,
+				disable: false,
+				converters: []
+			});
+			Elements.insert({
+				eid: 'r',
+				type: 'item',
+				name: 'Radio Button',
+				orientation: true
+			});
+			Elements.insert({
+				eid: 'c',
+				type: 'item',
+				name: 'Calendar',
+				option: ['adult', 'max']
+			});
+			Elements.insert({
+				eid: 'b',
+				type: 'item',
+				name: 'Check Box',
+				events: [3]
+			});
+			Elements.insert({
+				eid: 's',
+				type: 'item',
+				name: 'Button',
+				events: [3],
+				a4j: true
+			});
+			Elements.insert({
+				eid: 'u',
+				type: 'item',
+				name: 'File Upload'
+			});
+			Elements.insert({
+				eid: 'pad',
+				type: 'item',
+				name: 'Padding',
+				tabInd: false,
+				disable: false,
+				default: false
+			});
+			Elements.insert({
+				eid: 'x',
+				type: 'item',
+				name: 'Blank Cell',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+			Elements.insert({
+				eid: 't0',
+				type: 'container',
+				name: 'Content Box',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+			Elements.insert({
+				eid: 't1',
+				type: 'container',
+				name: 'Table',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+			Elements.insert({
+				eid: 'tm',
+				type: 'container',
+				name: 'Table Full',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+			Elements.insert({
+				eid: 'y',
+				type: 'container',
+				name: 'Panel Group',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+		}
+
+		Events.remove({});
+		if (Events.find({}).count() === 0) {
+			Events.insert({id: 1, name: 'onblur'});
+			Events.insert({id: 2, name: 'onchange'});
+			Events.insert({id: 3, name: 'onclick'});
+			Events.insert({id: 4, name: 'ondblclick'});
+			Events.insert({id: 5, name: 'onfocus'});
+			Events.insert({id: 6, name: 'onkeypress'});
+			Events.insert({id: 7, name: 'onkeyup'});
+			Events.insert({id: 8, name: 'onkeydown'});
+			Events.insert({id: 9, name: 'onmousedown'});
+			Events.insert({id: 10, name: 'onmousemove'});
+			Events.insert({id: 11, name: 'onmouseout'});
+			Events.insert({id: 12, name: 'onmouseover'});
+			Events.insert({id: 13, name: 'onmouseup'});
+			Events.insert({id: 14, name: 'onselect'});
+		}
+
+		Validators.remove({});
+		if (Validators.find({}).count() === 0) {
+			Validators.insert({id: '$', name: 'currency'});
+			Validators.insert({id: 'e', name: 'email'});
+			Validators.insert({id: 'p', name: 'password', object: 'securePassword'});
+			Validators.insert({id: 'h', name: 'phone', object: 'intPhoneNumber'});
+			Validators.insert({id: 's', name: 'ssn'});
+			Validators.insert({id: '%', name: 'percentage'});
+			Validators.insert({id: 'z', name: 'postalcode'});
+			Validators.insert({id: 't', name: 'einTax'});
+			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
+		}
+
+		Pages.remove({});
+		if (Pages.find({}).count() === 0) {
+			Pages.insert({
+				name: 'Quick Contractor Questionnaire',
+				menu: true,
+				template: false,
+				pagetitle: 'easyCntrctQues',
+				dto: 'easyContractQuesDTO',
+				backing: 'easyContractQuesBacking',
+				elements: [
+					{
+						type: 'container',
+						eid: 't0',
+						id: 'easyCntrctQues',
+						label: 'easyCntrctQues',
+						elements: [
+							{
+								type: 'item',
+								eid: 't',
+								id: 'bndAmt',
+								label: 'bndAmt',
+								value: 'bond.bondAmount',
+								validator: 1,
+								converter: 1,
+								maxLen: 15,
+								events: {
+									1: 'validateAmount'
+								}
+							},
+							{
+								type: 'item',
+								eid: 'd',
+								id: 'bndType',
+								label: 'bndType',
+								value: 'bond.bondTypeId',
+								list: 'bondTypeSelectList',
+								events: {
+									2: 'changeStuff'
+								}
+							},
+							{
+								type: 'item',
+								eid: 'd',
+								id: 'bndFrm',
+								label: 'bndFrm',
+								value: 'bond.bondFormId',
+								list: 'bondFormSelectList',
+								validator: 1,
+								converter: 1
+							}
+						]
+					}
+
+				]
+			});
 		}
 	});
 }
