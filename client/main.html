@@ -32,24 +32,25 @@
       {{/each}}
     </div>
     <div class="col container">
+      {{#each elements}}
+        {{>element}}
+      {{/each}}
     </div>
   </div>
-<!-- <div class='examples'>
-  <div class='parent'>
-    <div class='wrapper'>
-      <div id='left1' class='dropzone container'>
-        {{#each items}}
-        <div class='item' style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
-        {{/each}}
-        <div class="row">
-          <div class="col container">
-            <div class="el">2</div>
-          </div>
-        </div>
-      </div>
-      <div id='right1' class='dropzone container'>
+</template>
+
+<template name="element">
+  {{#if compare type 'container'}}
+    <div class="row">
+      <div class="col container">
+        {{#if elements.length}}
+          {{#each elements}}
+            {{>element}}
+          {{/each}}
+        {{/if}}
       </div>
     </div>
-  </div>
-</div> -->
+  {{else}}
+    <div class='el'>{{value}}</div>
+  {{/if}}
 </template>

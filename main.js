@@ -10,60 +10,158 @@ Validators = new Meteor.Collection('validators');
 Converters = new Meteor.Collection('converters');
 
 if (Meteor.isClient) {
+	Template.registerHelper('compare', function(v1, v2) {
+	  if (typeof v1 === 'object' && typeof v2 === 'object') {
+	    return _.isEqual(v1, v2); // do a object comparison
+	  } else {
+	    return v1 === v2;
+	  }
+	});
+
 	Template.dragList.helpers({
-		items: function(){
+		items: function() {
 			return Items.find({});
+		},
+		page: function() {
+			return Pages.find({name: 'Quick Contractor Questionnaire'});
+		},
+		elements: function() {
+			var page = Pages.findOne({name: 'Quick Contractor Questionnaire'});
+
+			if (!page) {
+				return;
+			}
+
+		 	return page.elements;
 		}
 	});
+
+	Template.element.rendered = function() {
+		var potato = "hey";
+		drake.destroy();
+		drake = setupDragula();
+		drake.on('dragend', function(e) {recursiveSetup(e)});
+	}
+
+	var drake;
+	var selectedPositions = $([]);
+
+	// Dragula setup
+	function setupDragula() {
+		return dragula(querySelectorAllArray('.container'),{
+			copy: function (el, source) {
+				copyBool = source === document.getElementById('left1');
+				dragEle = el;
+
+				//saving the original relative positions of the elements before they are moved
+				if (!copyBool) {
+					selectedPositions = $('[grabbed]');
+				}
+				
+				return copyBool;
+			},
+		    accepts: function (el, target, source, sibling) {
+		        // prevent dragged containers from trying to drop inside itself
+				var copySource = document.getElementById('left1');
+
+		        return !contains(el,target) && target !== copySource
+		        	&& !isDescendant(copySource, target);
+		    },
+		    removeOnSpill: true
+		});
+	}
+
+	function recursiveSetup(el) {
+		moveSelected(el);
+		if (el.className.indexOf('row') > -1) {
+			drake.destroy();
+			drake = setupDragula();
+			drake.on('dragend', function(e) {recursiveSetup(e)});
+		}
+	}
+
+	function querySelectorAllArray(selector){
+	    return Array.prototype.slice.call(
+	        document.querySelectorAll(selector), 0
+	    );
+	}
+
+	// http://ejohn.org/blog/comparing-document-position/
+	function contains(a, b){
+	  return a.contains ?
+	    a != b && a.contains(b) :
+	    !!(a.compareDocumentPosition(b) & 16);
+	}
+
+	function isDescendant(parent, child) {
+	     var node = child.parentNode;
+	     while (node != null) {
+	         if (node == parent) {
+	             return true;
+	         }
+	         node = node.parentNode;
+	     }
+	     return false;
+	}
+
+	function moveSelected(target) {
+		if (copyBool) {
+			$(target).removeAttr('grabbed');
+		}
+
+		var before = true;
+		var ele;
+		var targetInd = selectedPositions.index(target);
+		$('[grabbed]').each(function() {
+			if (copyBool) {
+				if (this === dragEle) {
+					before = false;
+					return;
+				}
+			} else {
+				if (this === target) {
+					return;
+				}
+
+				before = true;
+				if (selectedPositions.index(this) > targetInd) {
+					before = false;
+				}
+			}
+
+			if (copyBool) {
+				ele = $(this).clone();
+				ele.removeAttr('grabbed');
+			} else {
+				ele = $(this);
+			}
+
+			if (before) {
+				ele.insertBefore(target);
+			} else {
+				ele.insertAfter(target);
+			}
+		});
+
+		dragEle = null;
+		selectedPositions = $([]);
+	}
+
 	Template.dragList.onRendered(function() {
 		var debug = false;
+		var potato = "Hey";
 
-		var drake = setupDragula();
+		drake = setupDragula();
 		var selectStack = [];
 		var dragEle;
 		var copyBool;
 		var removeEle;
-		var selectedPositions = $([]);
 
 		drake.on('dragend', function(el) {recursiveSetup(el)});
-
-		function recursiveSetup(el) {
-			moveSelected(el);
-			if (el.className.indexOf('row') > -1) {
-				drake.destroy();
-				drake = setupDragula();
-				drake.on('dragend', function(e) {recursiveSetup(e)});
-			}
-		}
 
 		$(window).on('mousedown', function(e) {select(e);});
 
 		drake.on('remove', function() {removeAllOthers();});
-
-		// Dragula setup
-		function setupDragula() {
-			return dragula(querySelectorAllArray('.container'),{
-				copy: function (el, source) {
-					copyBool = source === document.getElementById('left1');
-					dragEle = el;
-
-					//saving the original relative positions of the elements before they are moved
-					if (!copyBool) {
-						selectedPositions = $('[grabbed]');
-					}
-					
-					return copyBool;
-				},
-			    accepts: function (el, target, source, sibling) {
-			        // prevent dragged containers from trying to drop inside itself
-					var copySource = document.getElementById('left1');
-
-			        return !contains(el,target) && target !== copySource
-			        	&& !isDescendant(copySource, target);
-			    },
-			    removeOnSpill: true
-			});
-		}
 
 		function removeAllOthers() {
 			$('[grabbed]').each(function() {
@@ -139,72 +237,6 @@ if (Meteor.isClient) {
 			}
 			if (debug) {console.log(selectStack);}
 		}
-
-		function moveSelected(target) {
-			if (copyBool) {
-				$(target).removeAttr('grabbed');
-			}
-
-			var before = true;
-			var ele;
-			var targetInd = selectedPositions.index(target);
-			$('[grabbed]').each(function() {
-				if (copyBool) {
-					if (this === dragEle) {
-						before = false;
-						return;
-					}
-				} else {
-					if (this === target) {
-						return;
-					}
-
-					before = true;
-					if (selectedPositions.index(this) > targetInd) {
-						before = false;
-					}
-				}
-
-				if (copyBool) {
-					ele = $(this).clone();
-					ele.removeAttr('grabbed');
-				} else {
-					ele = $(this);
-				}
-
-				if (before) {
-					ele.insertBefore(target);
-				} else {
-					ele.insertAfter(target);
-				}
-			});
-
-			dragEle = null;
-			selectedPositions = $([]);
-		}
-
-		function isDescendant(parent, child) {
-		     var node = child.parentNode;
-		     while (node != null) {
-		         if (node == parent) {
-		             return true;
-		         }
-		         node = node.parentNode;
-		     }
-		     return false;
-		}
-		// UTILS
-		function querySelectorAllArray(selector){
-		    return Array.prototype.slice.call(
-		        document.querySelectorAll(selector), 0
-		    );
-		}
-		// http://ejohn.org/blog/comparing-document-position/
-		function contains(a, b){
-		  return a.contains ?
-		    a != b && a.contains(b) :
-		    !!(a.compareDocumentPosition(b) & 16);
-		}
 	});
 
 
@@ -246,7 +278,7 @@ if (Meteor.isServer) {
 		//default: true //all the default options
 		//value: true
 		//list: false //drop down list select items
-		Elements.remove({});
+		//Elements.remove({});
 		if (Elements.find({}).count() === 0) {
 			Elements.insert({
 				eid: 't',
@@ -358,7 +390,7 @@ if (Meteor.isServer) {
 			});
 		}
 
-		Events.remove({});
+		//Events.remove({});
 		if (Events.find({}).count() === 0) {
 			Events.insert({id: 1, name: 'onblur'});
 			Events.insert({id: 2, name: 'onchange'});
@@ -376,7 +408,7 @@ if (Meteor.isServer) {
 			Events.insert({id: 14, name: 'onselect'});
 		}
 
-		Validators.remove({});
+		//Validators.remove({});
 		if (Validators.find({}).count() === 0) {
 			Validators.insert({id: '$', name: 'currency'});
 			Validators.insert({id: 'e', name: 'email'});
@@ -389,7 +421,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		Pages.remove({});
+		//Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
@@ -402,16 +434,18 @@ if (Meteor.isServer) {
 					{
 						type: 'container',
 						eid: 't0',
+						pid: 1,
 						id: 'easyCntrctQues',
 						label: 'easyCntrctQues',
 						elements: [
 							{
 								type: 'item',
 								eid: 't',
+								pid: 2,
 								id: 'bndAmt',
 								label: 'bndAmt',
-								value: 'bond.bondAmount',
-								validator: 1,
+								value: 'bond.bondMoney',
+								validator: '$',
 								converter: 1,
 								maxLen: 15,
 								events: {
@@ -421,6 +455,7 @@ if (Meteor.isServer) {
 							{
 								type: 'item',
 								eid: 'd',
+								pid: 3,
 								id: 'bndType',
 								label: 'bndType',
 								value: 'bond.bondTypeId',
@@ -428,20 +463,103 @@ if (Meteor.isServer) {
 								events: {
 									2: 'changeStuff'
 								}
-							},
+							}
+						]
+					},
+					{
+						type: 'container',
+						eid: 't0',
+						pid: 5,
+						id: 'banana',
+						label: 'banana',
+						elements: [
 							{
-								type: 'item',
-								eid: 'd',
-								id: 'bndFrm',
-								label: 'bndFrm',
-								value: 'bond.bondFormId',
-								list: 'bondFormSelectList',
-								validator: 1,
-								converter: 1
+								type: 'container',
+								eid: 't0',
+								pid: 6,
+								id: 'potato',
+								label: 'banana',
+								elements: [
+									{
+										type: 'item',
+										eid: 'd',
+										pid: 4,
+										id: 'bndFrm',
+										label: 'bndFrm',
+										value: 'bond.bondFormId',
+										list: 'bondFormSelectList',
+										validator: 1,
+										converter: 1
+									}
+								]
 							}
 						]
 					}
 
+				],
+				revisions: [
+					{
+						id: 1,
+						date: '12345',
+						user: 'Chris Williams',
+						comment: 'Initial Commit of the page.',
+						data: {
+							name: 'Quick Contractor Questionnaire',
+							menu: true,
+							template: false,
+							pagetitle: 'easyCntrctQues',
+							dto: 'easyContractQuesDTO',
+							backing: 'easyContractQuesBacking',
+							elements: [
+								{
+									type: 'container',
+									eid: 't0',
+									pid: 1,
+									id: 'easyCntrctQues',
+									label: 'easyCntrctQues',
+									elements: [
+										{
+											type: 'item',
+											eid: 't',
+											pid: 2,
+											id: 'bndAmt',
+											label: 'bndAmt',
+											value: 'bond.bondMoney',
+											validator: '$',
+											converter: 1,
+											maxLen: 15,
+											events: {
+												1: 'validateAmount'
+											}
+										},
+										{
+											type: 'item',
+											eid: 'd',
+											pid: 3,
+											id: 'bndType',
+											label: 'bndType',
+											value: 'bond.bondTypeId',
+											list: 'bondTypeSelectList',
+											events: {
+												2: 'changeStuff'
+											}
+										},
+										{
+											type: 'item',
+											eid: 'd',
+											pid: 4,
+											id: 'bndFrm',
+											label: 'bndFrm',
+											value: 'bond.bondFormId',
+											list: 'bondFormSelectList',
+											validator: 1,
+											converter: 1
+										}
+									]
+								}
+							]
+						}
+					}
 				]
 			});
 		}
