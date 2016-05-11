@@ -14,12 +14,12 @@
 
 <template name="dragList">
   <div class="row root">
-    <div id='left1' class="col container">
+    <div id='left1' class="col panel">
       {{#each items}}
         {{#if compare type 'container'}}
           <div class="row" type="{{type}}">
             {{name}}
-            <div class="col container">
+            <div class="col panel" type="{{type}}">
             </div>
           </div>
         {{else}}
@@ -42,7 +42,7 @@
         <div class='el' style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
       {{/each}} -->
     </div>
-    <div class="col container">
+    <div class="col panel">
       {{#each elements}}
         {{>element}}
       {{/each}}
@@ -52,8 +52,9 @@
 
 <template name="element">
   {{#if compare type 'container'}}
-    <div class="row" _id="{{_id}}">
-      <div class="col container" _id="{{_id}}">
+    <div class="row" _id="{{_id}}" type="{{type}}">
+      {{_id}}
+      <div class="col panel" _id="{{_id}}" type="{{type}}">
         {{#if elements.length}}
           {{#each elements}}
             {{>element}}
@@ -62,6 +63,8 @@
       </div>
     </div>
   {{else}}
-    <div class='el' _id="{{_id}}">{{value}}</div>
+    <div class='el' _id="{{_id}}" type="{{type}}">
+      {{_id}}
+    </div>
   {{/if}}
 </template>

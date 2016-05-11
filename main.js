@@ -56,7 +56,7 @@ if (Meteor.isClient) {
 
 	// Dragula setup
 	function dragulaConfig() {
-		return dragula(querySelectorAllArray('.container'),{
+		return dragula(querySelectorAllArray('.panel'),{
 			copy: function (el, source) {
 				copyBool = source === document.getElementById('left1');
 				dragEle = el;
@@ -90,6 +90,18 @@ if (Meteor.isClient) {
 	    return Array.prototype.slice.call(
 	        document.querySelectorAll(selector), 0
 	    );
+	}
+
+	function getKeysByValue(obj, value) {
+		var keyArr = [];
+	    for(var prop in obj) {
+	        if(obj.hasOwnProperty(prop) ) {
+	             if(obj[prop] === value) {
+	                 keyArr.push(prop);
+	             }
+	        }
+	    }
+	    return keyArr;
 	}
 
 	// http://ejohn.org/blog/comparing-document-position/
@@ -161,9 +173,22 @@ if (Meteor.isClient) {
 		var ind = getIndex(ele_id, eles);
 
 		var ele = eles.splice(ind, 1)[0];
-		delete page.eleMap[ele_id];
 
+		delete page.eleMap[ele_id];
+		
 		return ele;
+	}
+
+	function deleteEleMapChildren(e) {
+		var ele_id = e.getAttribute('_id');
+		
+		var keyArr = getKeysByValue(page.eleMap, parseInt(ele_id));
+
+		while (keyArr.length > 0) {
+			keyArr = keyArr.concat(getKeysByValue(page.eleMap, parseInt(keyArr[0])));
+			delete page.eleMap[keyArr[0]];
+			keyArr.splice(0, 1);
+		}
 	}
 
 	function updateEle(e) {
@@ -213,7 +238,7 @@ if (Meteor.isClient) {
 			par_id = parseInt(par_id);
 		}
 		
-		elementMap[ele_id] = par_id;
+		elementMap[ele._id] = par_id;
 	}
 
 
@@ -223,6 +248,8 @@ if (Meteor.isClient) {
 		$('[grabbed]').each(function() {
 			if (this.className.indexOf('gu-mirror') == -1) {
 				this.remove();
+			} else {
+				deleteEleMapChildren(this);
 			}
 
 			deleteEle(this);
@@ -237,6 +264,7 @@ if (Meteor.isClient) {
 
 	function commitTransaction() {
 		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap, lastID: page.lastID }});
+		console.log(JSON.stringify(page.eleMap));
 	}
 
 	function moveSelected(target) {
@@ -349,7 +377,7 @@ if (Meteor.isClient) {
 							return;
 						}
 						
-						var container = $('.container');
+						var container = $('.panel');
 						var targetInd = container.find(target).index();
 						var lastTargetInd = container.find(lastTarget).index();
 
@@ -590,7 +618,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		//Pages.remove({});
+		Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
