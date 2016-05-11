@@ -236,7 +236,7 @@ if (Meteor.isClient) {
 	}
 
 	function commitTransaction() {
-		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap }});
+		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap, lastID: page.lastID }});
 	}
 
 	function moveSelected(target) {
@@ -288,7 +288,28 @@ if (Meteor.isClient) {
 
 			if (copyBool) {
 				//TODO
-				//insertEle(this, ele);
+				var type = this.getAttribute('type');
+				var obj = {
+					type: type,
+					eid: null,
+					_id: page.lastID = ++page.lastID,
+					id: null,
+					elements: []
+				};
+
+				if (type == 'container') {
+					obj.elements = [];
+				} else if (type == 'item') {
+					obj.label = null;
+					obj.value = null;
+				}
+				if (targetBool) {
+					insertEle(target, obj);
+					target.remove();
+				} else {
+					insertEle(ele, obj);
+					ele.remove();
+				}
 			} else {
 				updateEle(this);
 			}
@@ -391,18 +412,21 @@ if (Meteor.isServer) {
 	Meteor.startup(() => {
 		//Items.remove({});
 		if (Items.find({}).count() === 0) {
-			Items.insert({name:'Text Box', bgcolor: 'black', color:'red', id:1});
-			Items.insert({name:'Drop Down List', bgcolor: 'black', color:'blue', id:2});
-			Items.insert({name:'Radio Button', bgcolor: 'black', color:'green', id:3});
-			Items.insert({name:'Check Box', color:'orange', id:4});
-			Items.insert({name:'Calendar', bgcolor: 'black', color:'yellow', id:5});
-			Items.insert({name:'Output Text', color:'purple', id:6});
-			Items.insert({name:'Hyper Link', bgcolor: 'black', color:'brown', id:7});
-			Items.insert({name:'Suggestion Box', color:'pink', id:8});
-			Items.insert({name:'A4J Button', color:'cyan', id:9});
-			Items.insert({name:'Command Button', color:'gray', id:10});
-			Items.insert({name:'File Upload', id:11});
-			Items.insert({name:'Padding', id:12});
+			Items.insert({type:'item', name: 'Item'});
+			Items.insert({type:'container', name: 'Container'});
+
+			// Items.insert({name:'Text Box', bgcolor: 'black', color:'red', id:1});
+			// Items.insert({name:'Drop Down List', bgcolor: 'black', color:'blue', id:2});
+			// Items.insert({name:'Radio Button', bgcolor: 'black', color:'green', id:3});
+			// Items.insert({name:'Check Box', color:'orange', id:4});
+			// Items.insert({name:'Calendar', bgcolor: 'black', color:'yellow', id:5});
+			// Items.insert({name:'Output Text', color:'purple', id:6});
+			// Items.insert({name:'Hyper Link', bgcolor: 'black', color:'brown', id:7});
+			// Items.insert({name:'Suggestion Box', color:'pink', id:8});
+			// Items.insert({name:'A4J Button', color:'cyan', id:9});
+			// Items.insert({name:'Command Button', color:'gray', id:10});
+			// Items.insert({name:'File Upload', id:11});
+			// Items.insert({name:'Padding', id:12});
 
 			//_(20).times(function(n) {
 			//	Items.insert({name:'Item'+n,number:n});
