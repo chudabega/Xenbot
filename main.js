@@ -107,9 +107,9 @@ if (Meteor.isClient) {
 
 	var page;
 
-	function getIndex(pid, eles) {
+	function getIndex(_id, eles) {
 		var indexes = $.map(eles, function(e, index) {
-		    if(e.pid == pid) {
+		    if(e._id == _id) {
 		        return index;
 		    }
 		});
@@ -119,93 +119,96 @@ if (Meteor.isClient) {
 		return ind;
 	}
 
-	function getParentArray(pid) {
+	function getParentArray(_id) {
 		var eles = page.elements;
 
 		var elementMap = page.eleMap;
-		var eleArr = elementMap[pid];
+
+		var par_id = elementMap[_id];
+		var prev_id;
+		var eleArr = [];
+		while(par_id != null) {
+			prev_id = par_id;
+			par_id = elementMap[par_id];
+			eleArr.splice(0, 0, prev_id);
+		}
 
 		for (var i = 0; i < eleArr.length; i++) {
-			eles = $.grep(eles, function(e) {return e.pid == eleArr[i];})[0].elements;
+			eles = $.grep(eles, function(e) {return e._id == eleArr[i];})[0].elements;
 		}
 
 		return eles;
 	}
 
-	function getElementArray(pid) {
-		var eles = getParentArray(pid);
-		var ind = getIndex(pid, eles);
+	function getElementArray(_id) {
+		var eles = getParentArray(_id);
+		var ind = getIndex(_id, eles);
 
 		return eles[ind].elements;
 	}
 
-	function deleteEle(pid) {
+	function deleteEle(_id) {
 		//Remove an element from the page's element hierarchy
-		var eles = getParentArray(pid);
+		var eles = getParentArray(_id);
 
-		var ind = getIndex(pid, eles);
+		var ind = getIndex(_id, eles);
 
 		var ele = eles.splice(ind, 1)[0];
-		delete page.eleMap[pid];
+		delete page.eleMap[_id];
 
 		return ele;
 	}
 
 	function updateEle(e) {
-		var elePID = e.getAttribute('pid');
+		var ele_id = e.getAttribute('_id');
 
 		//Remove the element from the database
-		var ele = deleteEle(elePID);
+		var ele = deleteEle(ele_id);
 
 		insertEle(e, ele);
 	}
 
 	function insertEle(e, ele) {
 		//Find out the element id, parent id, and older sibling id if it exists
-		var elePID = e.getAttribute('pid');
-		var parPID = e.parentNode.getAttribute('pid');
-		var osPID = null;
+		var ele_id = e.getAttribute('_id');
+		var par_id = e.parentNode.getAttribute('_id');
+		var os_id = null;
 
 		var olderSib = $(e).prev();
 		if (olderSib.length > 0) {
-			osPID = olderSib[0].getAttribute('pid');
+			os_id = olderSib[0].getAttribute('_id');
 		}
 		
 		//Insert the element in the correct position
 		//If there is a parent container
 		var eles = page.elements;
 		var ind = 0;
-		if (parPID) {
-			eles = getElementArray(parPID);
+		if (par_id) {
+			eles = getElementArray(par_id);
 
 			//If there is no older sibling
-			if (!osPID) {
+			if (!os_id) {
 				eles.splice(0, 0, ele);
 			} else {
-				ind = getIndex(osPID, eles) + 1;
+				ind = getIndex(os_id, eles) + 1;
 				eles.splice(ind, 0, ele);
 			}
 		} else {
-			if (!osPID) {
+			if (!os_id) {
 				eles.splice(0, 0, ele);
 			} else {
-				ind = getIndex(osPID, eles) + 1;
+				ind = getIndex(os_id, eles) + 1;
 				eles.splice(ind, 0, ele);
 			}
 		}
 
 		//Update the eleMap
 		var elementMap = page.eleMap;
-		var eleArr;
-		if (parPID) {
-			var parEleArr = elementMap[parPID];
-			eleArr = parEleArr.slice()
-			eleArr.splice(eleArr.length, 0, parseInt(parPID));
-		} else {
-			eleArr = [];
+		if (par_id) {
+			par_id = parseInt(par_id);
 		}
 		
-		elementMap[elePID] = eleArr;
+		elementMap[ele_id] = par_id;
 	}
 
 	function moveSelected(target) {
@@ -544,7 +547,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		Pages.remove({});
+		//Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
@@ -553,27 +556,27 @@ if (Meteor.isServer) {
 				pagetitle: 'easyCntrctQues',
 				dto: 'easyContractQuesDTO',
 				backing: 'easyContractQuesBacking',
-				lastPID: 6,
+				lastID: 6,
 				eleMap: {
-					1: [],
-					2: [1],
-					3: [1],
-					5: [],
-					6: [5],
-					4: [5,6]
+					1: null,
+					2: 1,
+					3: 1,
+					5: null,
+					6: 5,
+					4: 6
 				},
 				elements: [
 					{
 						type: 'container',
 						eid: 't0',
-						pid: 1,
+						_id: 1,
 						id: 'easyCntrctQues',
 						label: 'easyCntrctQues',
 						elements: [
 							{
 								type: 'item',
 								eid: 't',
-								pid: 2,
+								_id: 2,
 								id: 'bndAmt',
 								label: 'bndAmt',
 								value: 'bond.bondMoney',
@@ -587,7 +590,7 @@ if (Meteor.isServer) {
 							{
 								type: 'item',
 								eid: 'd',
-								pid: 3,
+								_id: 3,
 								id: 'bndType',
 								label: 'bndType',
 								value: 'bond.bondTypeId',
@@ -601,21 +604,21 @@ if (Meteor.isServer) {
 					{
 						type: 'container',
 						eid: 't0',
-						pid: 5,
+						_id: 5,
 						id: 'banana',
 						label: 'banana',
 						elements: [
 							{
 								type: 'container',
 								eid: 't0',
-								pid: 6,
+								_id: 6,
 								id: 'potato',
 								label: 'banana',
 								elements: [
 									{
 										type: 'item',
 										eid: 'd',
-										pid: 4,
+										_id: 4,
 										id: 'bndFrm',
 										label: 'bndFrm',
 										value: 'bond.bondFormId',
@@ -645,14 +648,14 @@ if (Meteor.isServer) {
 								{
 									type: 'container',
 									eid: 't0',
-									pid: 1,
+									_id: 1,
 									id: 'easyCntrctQues',
 									label: 'easyCntrctQues',
 									elements: [
 										{
 											type: 'item',
 											eid: 't',
-											pid: 2,
+											_id: 2,
 											id: 'bndAmt',
 											label: 'bndAmt',
 											value: 'bond.bondMoney',
@@ -666,7 +669,7 @@ if (Meteor.isServer) {
 										{
 											type: 'item',
 											eid: 'd',
-											pid: 3,
+											_id: 3,
 											id: 'bndType',
 											label: 'bndType',
 											value: 'bond.bondTypeId',
@@ -678,7 +681,7 @@ if (Meteor.isServer) {
 										{
 											type: 'item',
 											eid: 'd',
-											pid: 4,
+											_id: 4,
 											id: 'bndFrm',
 											label: 'bndFrm',
 											value: 'bond.bondFormId',
