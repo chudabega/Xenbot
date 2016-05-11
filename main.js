@@ -62,9 +62,9 @@ if (Meteor.isClient) {
 				dragEle = el;
 
 				//saving the original relative positions of the elements before they are moved
-				if (!copyBool) {
+				//if (!copyBool) {
 					selectedPositions = $('[grabbed]');
-				}
+				//}
 				
 				return copyBool;
 			},
@@ -181,7 +181,7 @@ if (Meteor.isClient) {
 
 	function deleteEleMapChildren(e) {
 		var ele_id = e.getAttribute('_id');
-		
+
 		var keyArr = getKeysByValue(page.eleMap, parseInt(ele_id));
 
 		while (keyArr.length > 0) {
@@ -193,9 +193,16 @@ if (Meteor.isClient) {
 
 	function updateEle(e) {
 		//Remove the element from the database
+		console.log("Element: " + e.getAttribute('_id'));
+
+		logFirstLevelIds("Update Start");
 		var ele = deleteEle(e);
 
+		logFirstLevelIds("Update After Del");
+
 		insertEle(e, ele);
+
+		logFirstLevelIds("Update After Insert");
 	}
 
 	function insertEle(e, ele) {
@@ -264,7 +271,74 @@ if (Meteor.isClient) {
 
 	function commitTransaction() {
 		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap, lastID: page.lastID }});
-		console.log(JSON.stringify(page.eleMap));
+		//console.log(JSON.stringify(page.eleMap));
+		//console.log(JSON.stringify(page.elements));
+
+		logFirstLevelIds("commitTransaction");
+	}
+
+	function logFirstLevelIds(section) {
+		var pageElements = page.elements;
+		var pageEleArr = [];
+		for (var i = 0; i < pageElements.length; i++) {
+			pageEleArr.push(pageElements[i]['_id']);
+		}
+
+		console.log(section + ": " + pageEleArr);
+	}
+
+	function moveRelativeToTarget(target, element, beforeBool) {
+		var ele;
+		var targetBool = false;
+		if (target === element) {
+			targetBool = true;
+		}
+
+		ele = $(element);
+
+		//Still required so that there is a holding position for elements being copied before being deleted
+		//As the database will eventually create the object itself but the method needs a position
+		if (copyBool && !targetBool) {
+			ele = $(element).clone();
+			ele.removeAttr('grabbed');
+		}
+
+		if (!targetBool) {
+			if (beforeBool) {
+				ele.insertBefore(target);
+			} else {
+				ele.insertAfter(target);
+			}
+		}
+
+		ele = ele[0];
+
+		if (copyBool) {
+			var type = ele.getAttribute('type');
+			var obj = {
+				type: type,
+				eid: null,
+				_id: page.lastID = ++page.lastID,
+				id: null
+			};
+
+			if (type == 'container') {
+				obj.elements = [];
+			} else if (type == 'item') {
+				obj.label = null;
+				obj.value = null;
+			}
+			
+			if (targetBool) {
+				insertEle(target, obj);
+				target.remove();
+			} else {
+				insertEle(ele, obj);
+				ele.remove();
+			}
+		} else {
+			updateEle(ele);
+		}
 	}
 
 	function moveSelected(target) {
@@ -278,70 +352,89 @@ if (Meteor.isClient) {
 		}
 
 		var before = true;
-		var ele;
+
 		var targetInd = selectedPositions.index(target);
-		var targetBool =  false;
-		$('[grabbed]').each(function() {
-			targetBool = false;
-			if (copyBool) {
-				if (this === dragEle) {
-					before = false;
-					targetBool = true;
-				}
-			} else {
-				if (this === target) {
-					targetBool = true;
-				}
 
-				before = true;
-				if (selectedPositions.index(this) > targetInd) {
-					before = false;
-				}
-			}
+		if (copyBool) {
+			targetInd = selectedPositions.index(dragEle);
+		}
 
-			if (!targetBool) {
-				if (copyBool) {
-					ele = $(this).clone();
-					ele.removeAttr('grabbed');
-				} else {
-					ele = $(this);
-				}
+		if (!copyBool) {
+			moveRelativeToTarget(target, target);
+		}
 
-				if (before) {
-					ele.insertBefore(target);
-				} else {
-					ele.insertAfter(target);
-				}
-			}
+		for (var i = 0; i < targetInd; i++) {
+			moveRelativeToTarget(target, selectedPositions[i], before);			
+		}
 
-			if (copyBool) {
-				//TODO
-				var type = this.getAttribute('type');
-				var obj = {
-					type: type,
-					eid: null,
-					_id: page.lastID = ++page.lastID,
-					id: null,
-					elements: []
-				};
+		for (var i = selectedPositions.length - 1; i > targetInd; i--) {
+			moveRelativeToTarget(target, selectedPositions[i], !before);		
+		}
 
-				if (type == 'container') {
-					obj.elements = [];
-				} else if (type == 'item') {
-					obj.label = null;
-					obj.value = null;
-				}
-				if (targetBool) {
-					insertEle(target, obj);
-					target.remove();
-				} else {
-					insertEle(ele, obj);
-					ele.remove();
-				}
-			} else {
-				updateEle(this);
-			}
-		});
+		if (copyBool) {
+			moveRelativeToTarget(target, target);
+		}
+
+		// $('[grabbed]').each(function() {
+		// 	targetBool = false;
+		// 	if (copyBool) {
+		// 		if (this === dragEle) {
+		// 			before = false;
+		// 			targetBool = true;
+		// 		}
+		// 	} else {
+		// 		if (this === target) {
+		// 			targetBool = true;
+		// 		}
+
+		// 		before = true;
+		// 		if (selectedPositions.index(this) > targetInd) {
+		// 			before = false;
+		// 		}
+		// 	}
+
+		// 	if (!targetBool) {
+		// 		if (copyBool) {
+		// 			ele = $(this).clone();
+		// 			ele.removeAttr('grabbed');
+		// 		} else {
+		// 			ele = $(this);
+		// 		}
+
+		// 		if (before) {
+		// 			ele.insertBefore(target);
+		// 		} else {
+		// 			ele.insertAfter(target);
+		// 		}
+		// 	}
+
+		// 	if (copyBool) {
+		// 		//TODO
+		// 		var type = this.getAttribute('type');
+		// 		var obj = {
+		// 			type: type,
+		// 			eid: null,
+		// 			_id: page.lastID = ++page.lastID,
+		// 			id: null
+		// 		};
+
+		// 		if (type == 'container') {
+		// 			obj.elements = [];
+		// 		} else if (type == 'item') {
+		// 			obj.label = null;
+		// 			obj.value = null;
+		// 		}
+		// 		if (targetBool) {
+		// 			insertEle(target, obj);
+		// 			target.remove();
+		// 		} else {
+		// 			insertEle(ele, obj);
+		// 			ele.remove();
+		// 		}
+		// 	} else {
+		// 		updateEle(this);
+		// 	}
+		// });
 
 		//Update the database with the data changes.
 		commitTransaction();
@@ -369,7 +462,7 @@ if (Meteor.isClient) {
 			//TODO prevent shift modifier on cross container
 			var target = e.target;
 			var className = target.className;
-			if (className.indexOf('row') > -1 || className.indexOf('el') > -1) {
+			if (className.indexOf('row') > -1 || className.indexOf('element') > -1) {
 				if (e.shiftKey) {
 					if (selectStack.length > 0) {
 						var lastTarget = selectStack[selectStack.length - 1];
@@ -618,7 +711,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		Pages.remove({});
+		//Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
