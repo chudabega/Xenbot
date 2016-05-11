@@ -39,16 +39,23 @@ if (Meteor.isClient) {
 	});
 
 	Template.element.rendered = function() {
-		drake.destroy();
-		drake = setupDragula();
+		dragulaSetup();
+	}
+
+	function dragulaSetup() {
+		if (typeof drake != "undefined") {
+			drake.destroy();
+		}
+		drake = dragulaConfig();
 		drake.on('dragend', function(e) {recursiveSetup(e)});
+		drake.on('remove', function() {removeAll();});
 	}
 
 	var drake;
 	var selectedPositions = $([]);
 
 	// Dragula setup
-	function setupDragula() {
+	function dragulaConfig() {
 		return dragula(querySelectorAllArray('.container'),{
 			copy: function (el, source) {
 				copyBool = source === document.getElementById('left1');
@@ -75,9 +82,7 @@ if (Meteor.isClient) {
 	function recursiveSetup(el) {
 		moveSelected(el);
 		if (el.className.indexOf('row') > -1) {
-			drake.destroy();
-			drake = setupDragula();
-			drake.on('dragend', function(e) {recursiveSetup(e)});
+			dragulaSetup();
 		}
 	}
 
@@ -147,23 +152,23 @@ if (Meteor.isClient) {
 		return eles[ind].elements;
 	}
 
-	function deleteEle(_id) {
+	function deleteEle(e) {
 		//Remove an element from the page's element hierarchy
-		var eles = getParentArray(_id);
+		var ele_id = e.getAttribute('_id');
 
-		var ind = getIndex(_id, eles);
+		var eles = getParentArray(ele_id);
+
+		var ind = getIndex(ele_id, eles);
 
 		var ele = eles.splice(ind, 1)[0];
-		delete page.eleMap[_id];
+		delete page.eleMap[ele_id];
 
 		return ele;
 	}
 
 	function updateEle(e) {
-		var ele_id = e.getAttribute('_id');
-
 		//Remove the element from the database
-		var ele = deleteEle(ele_id);
+		var ele = deleteEle(e);
 
 		insertEle(e, ele);
 	}
@@ -211,11 +216,34 @@ if (Meteor.isClient) {
 		elementMap[ele_id] = par_id;
 	}
 
+
+	function removeAll() {
+		startTransaction();
+
+		$('[grabbed]').each(function() {
+			if (this.className.indexOf('gu-mirror') == -1) {
+				this.remove();
+			}
+
+			deleteEle(this);
+		});
+
+		commitTransaction();
+	}
+
+	function startTransaction() {
+		page = Pages.findOne({name: pageName});
+	}
+
+	function commitTransaction() {
+		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap }});
+	}
+
 	function moveSelected(target) {
 		//The target is the destination element
 
 		//Update the target in the database we'll do the rest during the loop through the grabbed items
-		page = Pages.findOne({name: pageName});
+		startTransaction();
 
 		if (copyBool) {
 			$(target).removeAttr('grabbed');
@@ -267,8 +295,7 @@ if (Meteor.isClient) {
 		});
 
 		//Update the database with the data changes.
-		var potato = "hey";
-		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap }});
+		commitTransaction();
 
 		dragEle = null;
 		selectedPositions = $([]);
@@ -277,25 +304,17 @@ if (Meteor.isClient) {
 	Template.dragList.onRendered(function() {
 		var debug = false;
 
-		drake = setupDragula();
 		var selectStack = [];
 		var dragEle;
 		var copyBool;
 		var removeEle;
 
-		drake.on('dragend', function(el) {recursiveSetup(el)});
 
 		$(window).on('mousedown', function(e) {select(e);});
 
-		drake.on('remove', function() {removeAllOthers();});
-
-		function removeAllOthers() {
-			$('[grabbed]').each(function() {
-				if (this.className.indexOf('gu-mirror') == -1) {
-					this.remove();
-				}
-			});
-		}
+		drake = dragulaConfig();
+		drake.on('dragend', function(el) {recursiveSetup(el)});
+		drake.on('remove', function() {removeAll();});
 
 		function select(e) {
 			//TODO prevent shift modifier on cross container
