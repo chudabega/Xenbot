@@ -41,8 +41,8 @@
 
 <template name="element">
   {{#if compare type 'container'}}
-    <div class="row">
-      <div class="col container">
+    <div class="row" pid="{{pid}}">
+      <div class="col container" pid="{{pid}}">
         {{#if elements.length}}
           {{#each elements}}
             {{>element}}
@@ -51,6 +51,6 @@
       </div>
     </div>
   {{else}}
-    <div class='el'>{{value}}</div>
+    <div class='el' pid="{{pid}}">{{value}}</div>
   {{/if}}
 </template>

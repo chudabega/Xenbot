@@ -18,15 +18,17 @@ if (Meteor.isClient) {
 	  }
 	});
 
+	var pageName = 'Quick Contractor Questionnaire';
+
 	Template.dragList.helpers({
 		items: function() {
 			return Items.find({});
 		},
 		page: function() {
-			return Pages.find({name: 'Quick Contractor Questionnaire'});
+			return Pages.find({name: pageName});
 		},
 		elements: function() {
-			var page = Pages.findOne({name: 'Quick Contractor Questionnaire'});
+			var page = Pages.findOne({name: pageName});
 
 			if (!page) {
 				return;
@@ -37,7 +39,6 @@ if (Meteor.isClient) {
 	});
 
 	Template.element.rendered = function() {
-		var potato = "hey";
 		drake.destroy();
 		drake = setupDragula();
 		drake.on('dragend', function(e) {recursiveSetup(e)});
@@ -104,7 +105,115 @@ if (Meteor.isClient) {
 	     return false;
 	}
 
+	var page;
+
+	function getIndex(pid, eles) {
+		var indexes = $.map(eles, function(e, index) {
+		    if(e.pid == pid) {
+		        return index;
+		    }
+		});
+
+		var ind = indexes[0];
+
+		return ind;
+	}
+
+	function getParentArray(pid) {
+		var eles = page.elements;
+
+		var elementMap = page.eleMap;
+		var eleArr = elementMap[pid];
+
+		for (var i = 0; i < eleArr.length; i++) {
+			eles = $.grep(eles, function(e) {return e.pid == eleArr[i];})[0].elements;
+		}
+
+		return eles;
+	}
+
+	function getElementArray(pid) {
+		var eles = getParentArray(pid);
+		var ind = getIndex(pid, eles);
+
+		return eles[ind].elements;
+	}
+
+	function deleteEle(pid) {
+		//Remove an element from the page's element hierarchy
+		var eles = getParentArray(pid);
+
+		var ind = getIndex(pid, eles);
+
+		var ele = eles.splice(ind, 1)[0];
+		delete page.eleMap[pid];
+
+		return ele;
+	}
+
+	function updateEle(e) {
+		var elePID = e.getAttribute('pid');
+
+		//Remove the element from the database
+		var ele = deleteEle(elePID);
+
+		insertEle(e, ele);
+	}
+
+	function insertEle(e, ele) {
+		//Find out the element id, parent id, and older sibling id if it exists
+		var elePID = e.getAttribute('pid');
+		var parPID = e.parentNode.getAttribute('pid');
+		var osPID = null;
+
+		var olderSib = $(e).prev();
+		if (olderSib.length > 0) {
+			osPID = olderSib[0].getAttribute('pid');
+		}
+		
+		//Insert the element in the correct position
+		//If there is a parent container
+		var eles = page.elements;
+		var ind = 0;
+		if (parPID) {
+			eles = getElementArray(parPID);
+
+			//If there is no older sibling
+			if (!osPID) {
+				eles.splice(0, 0, ele);
+			} else {
+				ind = getIndex(osPID, eles) + 1;
+				eles.splice(ind, 0, ele);
+			}
+		} else {
+			if (!osPID) {
+				eles.splice(0, 0, ele);
+			} else {
+				ind = getIndex(osPID, eles) + 1;
+				eles.splice(ind, 0, ele);
+			}
+		}
+
+		//Update the eleMap
+		var elementMap = page.eleMap;
+		var eleArr;
+		if (parPID) {
+			var parEleArr = elementMap[parPID];
+			eleArr = parEleArr.slice()
+			eleArr.splice(eleArr.length, 0, parseInt(parPID));
+		} else {
+			eleArr = [];
+		}
+		
+		elementMap[elePID] = eleArr;
+	}
+
 	function moveSelected(target) {
+		//The target is the destination element
+
+		//Update the target in the database we'll do the rest during the loop through the grabbed items
+		page = Pages.findOne({name: pageName});
+
 		if (copyBool) {
 			$(target).removeAttr('grabbed');
 		}
@@ -112,15 +221,17 @@ if (Meteor.isClient) {
 		var before = true;
 		var ele;
 		var targetInd = selectedPositions.index(target);
+		var targetBool =  false;
 		$('[grabbed]').each(function() {
+			targetBool = false;
 			if (copyBool) {
 				if (this === dragEle) {
 					before = false;
-					return;
+					targetBool = true;
 				}
 			} else {
 				if (this === target) {
-					return;
+					targetBool = true;
 				}
 
 				before = true;
@@ -129,19 +240,32 @@ if (Meteor.isClient) {
 				}
 			}
 
-			if (copyBool) {
-				ele = $(this).clone();
-				ele.removeAttr('grabbed');
-			} else {
-				ele = $(this);
+			if (!targetBool) {
+				if (copyBool) {
+					ele = $(this).clone();
+					ele.removeAttr('grabbed');
+				} else {
+					ele = $(this);
+				}
+
+				if (before) {
+					ele.insertBefore(target);
+				} else {
+					ele.insertAfter(target);
+				}
 			}
 
-			if (before) {
-				ele.insertBefore(target);
+			if (copyBool) {
+				//TODO
+				//insertEle(this, ele);
 			} else {
-				ele.insertAfter(target);
+				updateEle(this);
 			}
 		});
+
+		//Update the database with the data changes.
+		var potato = "hey";
+		Pages.update({ _id: page._id }, { $set: {elements: page.elements, eleMap: page.eleMap }});
 
 		dragEle = null;
 		selectedPositions = $([]);
@@ -149,7 +273,6 @@ if (Meteor.isClient) {
 
 	Template.dragList.onRendered(function() {
 		var debug = false;
-		var potato = "Hey";
 
 		drake = setupDragula();
 		var selectStack = [];
@@ -421,7 +544,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		//Pages.remove({});
+		Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
@@ -430,6 +553,15 @@ if (Meteor.isServer) {
 				pagetitle: 'easyCntrctQues',
 				dto: 'easyContractQuesDTO',
 				backing: 'easyContractQuesBacking',
+				lastPID: 6,
+				eleMap: {
+					1: [],
+					2: [1],
+					3: [1],
+					5: [],
+					6: [5],
+					4: [5,6]
+				},
 				elements: [
 					{
 						type: 'container',
@@ -495,7 +627,6 @@ if (Meteor.isServer) {
 							}
 						]
 					}
-
 				],
 				revisions: [
 					{
