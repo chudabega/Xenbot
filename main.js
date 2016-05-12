@@ -56,9 +56,9 @@ if (Meteor.isClient) {
 
 	// Dragula setup
 	function dragulaConfig() {
-		return dragula(querySelectorAllArray('.panel'),{
+		return dragula(querySelectorAllArray('.panel'), {
 			copy: function (el, source) {
-				copyBool = source === document.getElementById('left1');
+				copyBool = source === document.getElementById('itemMenu');
 				dragEle = el;
 
 				//saving the original relative positions of the elements before they are moved
@@ -70,20 +70,28 @@ if (Meteor.isClient) {
 			},
 		    accepts: function (el, target, source, sibling) {
 		        // prevent dragged containers from trying to drop inside itself
-				var copySource = document.getElementById('left1');
+				var copySource = document.getElementById('itemMenu');
 
 		        return !contains(el,target) && target !== copySource
 		        	&& !isDescendant(copySource, target);
 		    },
-		    removeOnSpill: true
+		    removeOnSpill: true,
+			direction: 'vertical'
 		});
 	}
 
 	function recursiveSetup(el) {
-		moveSelected(el);
-		if (el.className.indexOf('row') > -1) {
-			dragulaSetup();
+		//If there is something selected then perform the move
+		if ($('[grabbed]').length) {
+			moveSelected(el);
 		}
+
+		//what if dragging an item and a container into another container?
+		//That nested container will fail meaning you need to check for the existence of a nested container.
+		//What if removing a container? The old container is still a part of dragula will that cause an issue?
+		//if (el.className.indexOf('panelGrab') > -1) {
+			dragulaSetup();
+		//}
 	}
 
 	function querySelectorAllArray(selector){
@@ -461,8 +469,14 @@ if (Meteor.isClient) {
 		function select(e) {
 			//TODO prevent shift modifier on cross container
 			var target = e.target;
+
+			var closestEle = $(target).closest('.element');
+			if (closestEle.length) {
+				target = closestEle[0];
+			}
+
 			var className = target.className;
-			if (className.indexOf('row') > -1 || className.indexOf('element') > -1) {
+			if (className.indexOf('panelGrab') > -1 || className.indexOf('element') > -1) {
 				if (e.shiftKey) {
 					if (selectStack.length > 0) {
 						var lastTarget = selectStack[selectStack.length - 1];
@@ -711,7 +725,7 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
 		}
 
-		//Pages.remove({});
+		Pages.remove({});
 		if (Pages.find({}).count() === 0) {
 			Pages.insert({
 				name: 'Quick Contractor Questionnaire',
@@ -732,14 +746,14 @@ if (Meteor.isServer) {
 				elements: [
 					{
 						type: 'container',
-						eid: 't0',
+						eType: 'Content Box',
 						_id: 1,
 						id: 'easyCntrctQues',
 						label: 'easyCntrctQues',
 						elements: [
 							{
 								type: 'item',
-								eid: 't',
+								eType: 'Text Box',
 								_id: 2,
 								id: 'bndAmt',
 								label: 'bndAmt',
@@ -753,7 +767,7 @@ if (Meteor.isServer) {
 							},
 							{
 								type: 'item',
-								eid: 'd',
+								eType: 'Drop Down',
 								_id: 3,
 								id: 'bndType',
 								label: 'bndType',
@@ -767,21 +781,21 @@ if (Meteor.isServer) {
 					},
 					{
 						type: 'container',
-						eid: 't0',
+						eType: 'Panel Group',
 						_id: 5,
 						id: 'banana',
 						label: 'banana',
 						elements: [
 							{
 								type: 'container',
-								eid: 't0',
+								eType: 'Field Set',
 								_id: 6,
 								id: 'potato',
 								label: 'banana',
 								elements: [
 									{
 										type: 'item',
-										eid: 'd',
+										eType: 'Drop Down',
 										_id: 4,
 										id: 'bndFrm',
 										label: 'bndFrm',

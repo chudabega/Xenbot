@@ -1,8 +1,13 @@
 body {
-  background-color: #942A57;
+  background-color: #335B73;
+  margin-bottom: 6px;
+  max-width: 1280px;
   margin: 0 auto;
-  max-width: 760px;
+  padding: 0 5px;
+  font-family: Arial;
+  font-size: 12pt;
 }
+
 .wrapper {
 	width:600px;
 }
@@ -17,12 +22,6 @@ html, body {
   -webkit-box-sizing: inherit;
   -moz-box-sizing: inherit;
   box-sizing: inherit;
-}
-
-body, input, button {
-  font-family: Georgia, Helvetica;
-  font-size: 17px;
-  color: #ecf0f1;
 }
 
 h1 {
@@ -180,27 +179,82 @@ button:hover {
   cursor: move;
 }
 
-.row {
-    display:flex;
-    background:orange;
-    padding-top:.5em;
-    margin:1px;
+.panelGrab {
+    display: flex;
+    background: #029132;
+    margin: 1px;
+    position: relative;
+    padding: 15px 2px 0px;
+    border-radius: 4px;
+    color: white;
 }
-.root {
-    padding:0;
+.panelGrab > .id {
+    position: absolute;
+    top: 0px;
+    right: 5px
 }
-.col {
-    background:#f7f7f7;
+.panel {
+    background:#D1D1D1;
     flex:1;
     margin:1px;
     min-height:1em;
 }
+.root {
+    padding:0;
+}
 .element {
-    background:#e5e5e5;
+    background:#fff;
     margin:1px;
     min-height:2em;
     color:black;
+    border-radius: 4px;
 }
 [grabbed] {
-  background-color: blue !important;
+  background-color: #8F8FFF !important;
+}
+
+.list {
+  line-height: normal;
+  padding-bottom: 70px;
+  margin-left: 124px;
+}
+.list label {
+  text-align: left !important;
+  padding-top: 0px !important;
+}
+.listEle {
+  border: 1px solid gainsboro;
+  border-top: none;
+  padding: 10px 20px;
+  font-size: 11pt;
+}
+.listEle:hover {
+    background-color: #E8FFFF;
+}
+.listFooter {
+  text-align: right;
+}
+@media (max-width: 991px) {
+  .list label {
+    text-align: right !important;
+  }
+}
+
+.id {
+  float: right;
+}
+#itemMenu {
+  position: fixed;
+  display: inline-block;
+  width: 120px;
+  z-index: 1;
+  margin-top: 2px;
+  margin-left: 0px;
+  padding: 2px 2px 1px;
+  background: #FFFFAA;
+  border: 2px solid #D1D1D1;
+  border-top-color: #D1D1D1;
+  font-weight: bold;
+  text-align: center;
+  line-height: 30px;
 }

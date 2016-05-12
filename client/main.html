@@ -13,48 +13,33 @@
 
 
 <template name="dragList">
-  <div class="row root">
-    <div id='left1' class="col panel">
-      {{#each items}}
-        {{#if compare type 'container'}}
-          <div class="row" type="{{type}}">
-            {{name}}
-            <div class="col panel" type="{{type}}">
-            </div>
+  <div id='itemMenu' class="panel row">
+    Element Menu
+    {{#each items}}
+      {{#if compare type 'container'}}
+        <div class="panelGrab row" type="{{type}}">
+          {{name}}
+          <div class="panel col" type="{{type}}">
           </div>
-        {{else}}
-          <div class="element" type="{{type}}">{{name}}</div>
-        {{/if}}
-      {{/each}}
-      <!-- <div class="row">
-        <div class="col container">
-          <div class="el">1</div>
         </div>
-      </div>
-      <div class="row">
-        <div class="col container">
-        </div>
-      </div>
-      <div class="el">2</div>
-      <div class="el">3</div>
-      <div class="el">4</div>
-      {{#each items}}
-        <div class='element' style='{{#if bgcolor}}background-color:{{bgcolor}};{{/if}}{{#if color}}color:{{color}};{{/if}}'>{{name}}</div>
-      {{/each}} -->
-    </div>
-    <div class="col panel">
-      {{#each elements}}
-        {{>element}}
-      {{/each}}
-    </div>
+      {{else}}
+        <div class="element" type="{{type}}">{{name}}</div>
+      {{/if}}
+    {{/each}}
+  </div>
+
+  <div class='list panel'>
+    {{#each elements}}
+      {{>element}}
+    {{/each}}
   </div>
 </template>
 
 <template name="element">
   {{#if compare type 'container'}}
-    <div class="row" _id="{{_id}}" type="{{type}}">
-      {{_id}}
-      <div class="col panel" _id="{{_id}}" type="{{type}}">
+    <div class="panelGrab row" _id="{{_id}}" type="{{type}}">
+      <div class='id'>{{_id}}</div>
+      <div class="panel col" _id="{{_id}}" type="{{type}}">
         {{#if elements.length}}
           {{#each elements}}
             {{>element}}
@@ -63,8 +48,59 @@
       </div>
     </div>
   {{else}}
-    <div class='element' _id="{{_id}}" type="{{type}}">
-      {{_id}}
+    <div class='element listEle' _id="{{_id}}" type="{{type}}">
+      <div class='listHeader'>
+        {{eType}}
+        <div class='id'>{{_id}}</div>
+      </div>
+      <div class='listBody'>
+        <div class='listContent'>
+          <div class='row'>
+            <div class='col-xs-12 col-md-2'>
+              <div class='row'>
+                <label class="col-xs-4 col-md-12 control-label">
+                  ID:
+                </label>
+                <div class='col-xs-8 col-md-12 textContainer'>
+                  {{id}}
+                </div>
+              </div>
+            </div>
+            <div class='col-xs-12 col-md-2'>
+              <div class='row'>
+                <label class="col-xs-4 col-md-12 control-label">
+                  Label:
+                </label>
+                <div class='col-xs-8 col-md-12 textContainer'>
+                  {{label}}
+                </div>
+              </div>
+            </div>
+            <div class='col-xs-12 col-md-4'>
+              <div class='row'>
+                <label class="col-xs-4 col-md-12 control-label">
+                  Value:
+                </label>
+                <div class='col-xs-8 col-md-12 textContainer'>
+                  {{value}}
+                </div>
+              </div>
+            </div>
+            <!-- <div class='col-xs-12 col-md-4'>
+              <div class='row'>
+                <label class="col-xs-4 col-md-12 control-label">
+                  Banana:
+                </label>
+                <div class='col-xs-8 col-md-12 textContainer'>
+                  Potato
+                </div>
+              </div>
+            </div> -->
+          </div>
+        </div>
+      </div>
+      <div class='listFooter'>
+      </div>
     </div>
   {{/if}}
 </template>
