@@ -188,6 +188,9 @@ button:hover {
     border-radius: 4px;
     color: white;
 }
+.panelGrab:hover {
+    background: #02BC41;
+}
 .panelGrab > .id {
     position: absolute;
     top: 0px;
@@ -228,7 +231,7 @@ button:hover {
   padding: 10px 20px;
   font-size: 11pt;
 }
-.listEle:hover {
+.element:hover {
     background-color: #E8FFFF;
 }
 .listFooter {
