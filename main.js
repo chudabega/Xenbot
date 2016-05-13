@@ -9,6 +9,10 @@ Events = new Meteor.Collection('events');
 Validators = new Meteor.Collection('validators');
 Converters = new Meteor.Collection('converters');
 
+db = {
+	element: Elements
+};
+
 if (Meteor.isClient) {
 	Template.registerHelper('compare', function(v1, v2) {
 	  if (typeof v1 === 'object' && typeof v2 === 'object') {
@@ -18,6 +22,7 @@ if (Meteor.isClient) {
 	  }
 	});
 
+	var debug = false;
 	var pageName = 'Quick Contractor Questionnaire';
 
 	Template.dragList.helpers({
@@ -36,10 +41,66 @@ if (Meteor.isClient) {
 
 		 	return page.elements;
 		}
+
 	});
 
 	Template.element.rendered = function() {
 		dragulaSetup();
+	}
+
+	Template.element.helpers({
+		eleItems: function() {
+			return Elements.find({type: 'item'});
+		}
+	});
+
+	Template.element.events({
+  		"change select": function(e, t) {
+			// e.preventDefault();
+			// startTransaction();
+
+			// var ele = findEleByObj(this);
+
+			// var eTypeId = e.target.value;
+			// var element = Elements.findOne({eTypeId: eTypeId});
+
+			// ele['eTypeId'] = eTypeId;
+			// ele['eTypeName'] = element.eTypeName;
+
+			// commitTransaction();
+			updateEleProperty(e, this);
+		},
+		"change input": function(e, t) {
+			updateEleProperty(e, this);
+		},
+	});
+
+	function updateEleProperty(e, obj) {
+		e.preventDefault();
+		startTransaction();
+
+		var ele = findEleByObj(obj);
+
+		var target = e.target;
+		var prop = target.name;
+		var value = target.value
+
+		if (target.type == 'text') {
+			ele[prop] = value;
+		} else if (e.target.type == "select-one") {
+			var propId = prop + "Id";
+			var propName = prop + "Name";
+
+			var criteria = {};
+			criteria[propId] = value;
+
+			var doc = db[prop].findOne(criteria);
+
+			ele[propId] = value;
+			ele[propName] = doc[propName];
+		}
+
+		commitTransaction();
 	}
 
 	function dragulaSetup() {
@@ -172,14 +233,28 @@ if (Meteor.isClient) {
 		return eles[ind].elements;
 	}
 
+	function findEleByObj(o) {
+		var ele_id = o._id;
+		var eles = getParentArray(ele_id);
+		var ind = getIndex(ele_id, eles);
+		var ele = eles[ind];
+		return ele;
+	}
+
+	// function findEle(e) {
+	// 	var pageEle = $(e).closest('.element')[0];
+	// 	var ele_id = pageEle.getAttribute('_id');
+	// 	var eles = getParentArray(ele_id);
+	// 	var ind = getIndex(ele_id, eles);
+	// 	var ele = eles.get(ind);
+	// 	return ele;
+	// }
+
 	function deleteEle(e) {
 		//Remove an element from the page's element hierarchy
 		var ele_id = e.getAttribute('_id');
-
 		var eles = getParentArray(ele_id);
-
 		var ind = getIndex(ele_id, eles);
-
 		var ele = eles.splice(ind, 1)[0];
 
 		delete page.eleMap[ele_id];
@@ -201,7 +276,7 @@ if (Meteor.isClient) {
 
 	function updateEle(e) {
 		//Remove the element from the database
-		console.log("Element: " + e.getAttribute('_id'));
+		if (debug) {console.log("Element: " + e.getAttribute('_id'));}
 
 		logFirstLevelIds("Update Start");
 		var ele = deleteEle(e);
@@ -286,13 +361,15 @@ if (Meteor.isClient) {
 	}
 
 	function logFirstLevelIds(section) {
-		var pageElements = page.elements;
-		var pageEleArr = [];
-		for (var i = 0; i < pageElements.length; i++) {
-			pageEleArr.push(pageElements[i]['_id']);
-		}
+		if (debug) {
+			var pageElements = page.elements;
+			var pageEleArr = [];
+			for (var i = 0; i < pageElements.length; i++) {
+				pageEleArr.push(pageElements[i]['_id']);
+			}
 
-		console.log(section + ": " + pageEleArr);
+			console.log(section + ": " + pageEleArr);
+		}
 	}
 
 	function moveRelativeToTarget(target, element, beforeBool) {
@@ -452,8 +529,6 @@ if (Meteor.isClient) {
 	}
 
 	Template.dragList.onRendered(function() {
-		var debug = false;
-
 		var selectStack = [];
 		var dragEle;
 		var copyBool;
@@ -469,6 +544,15 @@ if (Meteor.isClient) {
 		function select(e) {
 			//TODO prevent shift modifier on cross container
 			var target = e.target;
+
+			noSelProps = {
+				"text": null,
+				"select-one": null
+			};
+
+			if (noSelProps.hasOwnProperty(target.type)) {
+				return;
+			}
 
 			var closestEle = $(target).closest('.element');
 			if (closestEle.length) {
@@ -582,112 +666,120 @@ if (Meteor.isServer) {
 		//default: true //all the default options
 		//value: true
 		//list: false //drop down list select items
-		//Elements.remove({});
+		Elements.remove({});
 		if (Elements.find({}).count() === 0) {
 			Elements.insert({
-				eid: 't',
 				type: 'item',
-				name: 'Text Box',
+				elementId: 't',
+				elementName: 'Text Box',
 				maxLen: true,
 				events: [1,2,6,7,8],
 				validators: [],
 				converters: []
 			});
 			Elements.insert({
-				eid: 'd',
 				type: 'item',
-				name: 'Drop Down',
+				elementId: 'd',
+				elementName: 'Drop Down',
 				list: true,
 				events: [2]
 			});
 			Elements.insert({
-				eid: 'a',
 				type: 'item',
-				name: 'Hyper Link',
+				elementId: 'a',
+				elementName: 'Hyper Link',
 				events: [3]
 			});
 			Elements.insert({
-				eid: 'o',
 				type: 'item',
-				name: 'Output Text',
+				elementId: 'o',
+				elementName: 'Output Text',
 				tabInd: false,
 				disable: false,
 				converters: []
 			});
 			Elements.insert({
-				eid: 'r',
 				type: 'item',
-				name: 'Radio Button',
+				elementId: 'r',
+				elementName: 'Radio Button',
 				orientation: true
 			});
 			Elements.insert({
-				eid: 'c',
 				type: 'item',
-				name: 'Calendar',
+				elementId: 'c',
+				elementName: 'Calendar',
 				option: ['adult', 'max']
 			});
 			Elements.insert({
-				eid: 'b',
 				type: 'item',
-				name: 'Check Box',
+				elementId: 'b',
+				elementName: 'Check Box',
 				events: [3]
 			});
 			Elements.insert({
-				eid: 's',
 				type: 'item',
-				name: 'Button',
+				elementId: 's',
+				elementName: 'Button',
 				events: [3],
 				a4j: true
 			});
 			Elements.insert({
-				eid: 'u',
 				type: 'item',
-				name: 'File Upload'
+				elementId: 'u',
+				elementName: 'File Upload'
 			});
 			Elements.insert({
-				eid: 'pad',
 				type: 'item',
-				name: 'Padding',
+				elementId: 'pad',
+				elementName: 'Padding',
 				tabInd: false,
 				disable: false,
 				default: false
 			});
 			Elements.insert({
-				eid: 'x',
 				type: 'item',
-				name: 'Blank Cell',
+				elementId: 'x',
+				elementName: 'Blank Cell',
 				tabInd: false,
 				disable: false,
 				value: false
 			});
 			Elements.insert({
-				eid: 't0',
 				type: 'container',
-				name: 'Content Box',
+				elementId: 't0',
+				elementName: 'Content Box',
 				tabInd: false,
 				disable: false,
 				value: false
 			});
 			Elements.insert({
-				eid: 't1',
 				type: 'container',
-				name: 'Table',
+				elementId: 't1',
+				elementName: 'Table',
 				tabInd: false,
 				disable: false,
 				value: false
 			});
 			Elements.insert({
-				eid: 'tm',
 				type: 'container',
-				name: 'Table Full',
+				elementId: 'tm',
+				elementName: 'Table Full',
 				tabInd: false,
 				disable: false,
 				value: false
 			});
 			Elements.insert({
-				eid: 'y',
 				type: 'container',
-				name: 'Panel Group',
+				elementId: 'y',
+				elementName: 'Panel Group',
+				tabInd: false,
+				disable: false,
+				value: false
+			});
+			Elements.insert({
+				type: 'container',
+				elementId: 'f1',
+				elementName: 'Field Set',
 				tabInd: false,
 				disable: false,
 				value: false
@@ -746,14 +838,16 @@ if (Meteor.isServer) {
 				elements: [
 					{
 						type: 'container',
-						eType: 'Content Box',
+						elementId: 't0',
+						elementName: 'Content Box',
 						_id: 1,
 						id: 'easyCntrctQues',
 						label: 'easyCntrctQues',
 						elements: [
 							{
 								type: 'item',
-								eType: 'Text Box',
+								elementId: 't',
+								elementName: 'Text Box',
 								_id: 2,
 								id: 'bndAmt',
 								label: 'bndAmt',
@@ -767,7 +861,8 @@ if (Meteor.isServer) {
 							},
 							{
 								type: 'item',
-								eType: 'Drop Down',
+								elementId: 'd',
+								elementName: 'Drop Down',
 								_id: 3,
 								id: 'bndType',
 								label: 'bndType',
@@ -781,21 +876,24 @@ if (Meteor.isServer) {
 					},
 					{
 						type: 'container',
-						eType: 'Panel Group',
+						elementId: 'y',
+						elementName: 'Panel Group',
 						_id: 5,
 						id: 'banana',
 						label: 'banana',
 						elements: [
 							{
 								type: 'container',
-								eType: 'Field Set',
+								elementId: 'f1',
+								elementName: 'Field Set',
 								_id: 6,
 								id: 'potato',
 								label: 'banana',
 								elements: [
 									{
 										type: 'item',
-										eType: 'Drop Down',
+										elementId: 'd',
+										elementName: 'Drop Down',
 										_id: 4,
 										id: 'bndFrm',
 										label: 'bndFrm',

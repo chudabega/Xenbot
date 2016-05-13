@@ -50,7 +50,14 @@
   {{else}}
     <div class='element listEle' _id="{{_id}}" type="{{type}}">
       <div class='listHeader'>
-        {{eType}}
+        <strong>Type: </strong>
+        <select name='element' value='{{elementId}}'>
+        {{#let parId=elementId}}
+          {{#each eleItems}}
+            <option value='{{elementId}}' selected='{{#if compare elementId parId}}true{{/if}}'>{{elementName}}</option>
+          {{/each}}
+        {{/let}}
+        </select>
         <div class='id'>{{_id}}</div>
       </div>
       <div class='listBody'>
@@ -62,7 +69,7 @@
                   ID:
                 </label>
                 <div class='col-xs-8 col-md-12 textContainer'>
-                  {{id}}
+                  <input name='id' type='text' value='{{id}}'/>
                 </div>
               </div>
             </div>
@@ -72,7 +79,7 @@
                   Label:
                 </label>
                 <div class='col-xs-8 col-md-12 textContainer'>
-                  {{label}}
+                  <input name='label' type='text' value='{{label}}'/>
                 </div>
               </div>
             </div>
@@ -82,7 +89,7 @@
                   Value:
                 </label>
                 <div class='col-xs-8 col-md-12 textContainer'>
-                  {{value}}
+                  <input name='value' type='text' value='{{value}}'/>
                 </div>
               </div>
             </div>
