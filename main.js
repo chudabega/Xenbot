@@ -44,6 +44,13 @@ if (Meteor.isClient) {
 
 	});
 
+	Template.dragList.events({
+		"click button[name='create']": function(e, t) {
+			e.preventDefault();
+			create();
+		}
+	});
+
 	Template.element.rendered = function() {
 		dragulaSetup();
 	}
@@ -72,7 +79,7 @@ if (Meteor.isClient) {
 		},
 		"change input": function(e, t) {
 			updateEleProperty(e, this);
-		},
+		}
 	});
 
 	function updateEleProperty(e, obj) {
@@ -330,7 +337,6 @@ if (Meteor.isClient) {
 		
 		elementMap[ele._id] = par_id;
 	}
-
 
 	function removeAll() {
 		startTransaction();
@@ -624,7 +630,141 @@ if (Meteor.isClient) {
 		}
 	});
 
+	//CREATE SECTION
+	var pBack;
+	var dto;
 
+	var dto;
+	var bsO;
+	var bsC;
+	var pR;
+	var pD;
+
+	var typeMap = {
+		't': 'textBox',
+		'd': 'dropDown'
+	};
+
+	function create() {
+		startTransaction();
+
+		var eles = page.elements;
+		pBack = page.backing; + ".";
+		dto = pBack + "." + page.dto + ".";
+
+		var s = traverseEles(eles);
+
+		console.log(s);
+	}
+
+	var id;
+	var value;
+	var tab;
+	var label;
+	var formC;
+
+	function traverseEles(eles) {
+		var s = '';
+		for (var i = 0; i < eles.length; i++) {
+			var ele = eles[i];
+			if (ele.type == 'container') {
+				s += "<table>\n";
+				s += traverseEles(ele.elements);
+				s += "</table>\n";
+			} else if (ele.type == 'item') {
+				pR = "<h:panelGroup rendered=\"#{!" + pBack + ".privilegeObject['" + ele.privilege + "'].noPrivilege\">\n";
+				pD = "readonly=\"#{!easyPathBacking.privilegeObject['numberOfJobs'].canRead}\"\n";
+
+				id = " id='" + ele.id + "'";
+				value = " value='#{" + dto + ele.value + "}'";
+				tab = " tabindex='" + ele.tabInd + "'";
+				label = "<h:outputText value='#{global." + ele.label + "}#{global.colon}'/>";
+				formC = " styleClass='form-control'";
+
+				//Bootstrap Open
+				bsO = "<label class='col-md-3 control-label'>" + label + "</label>\n" +
+					  "<div class='col-md-8'>\n";
+
+				//Bootstrap Close
+				bsC = "</div>\n";
+
+				//CONTENT
+				s += pR +
+					 "<div class='form-group'>\n";
+				
+				s += eleContent[typeMap[ele.elementId]](ele);
+
+				s += "</div>\n" +
+					 "</h:panelGroup>\n";
+			}
+		}
+		return s;
+	}
+
+	var eleContent = {
+    	textBox: function(ele) {
+	        var s = bsO +
+				"<h:inputText" + id + formC + value + tab + "\n" +
+				pD +
+				eleConvertor(ele) +
+				eleValidators(ele) +
+				"</h:inputText>\n" +
+				bsC;
+			return s;
+	    },
+	    dropDown: function(ele) {
+			var s = bsO +
+				 	"<h:selectOneMenu" + id + formC + value + tab + "\n" +
+					pD +
+					eleValidators(ele) +
+					"<f:selectItems value='#{" + dto + ele.list + "}'/>\n" +
+					"</h:selectOneMenu>\n" +
+					bsC;
+			return s;
+	    }
+	};
+
+	function eleValidators(ele) {
+		var s = '';
+
+		var pre = "data-fv-";
+		var base;
+
+		if (ele.maxLen) {
+			base = pre + "stringlength";
+			s +=base + "='true'\n" +
+				base + "-max='" + ele.maxLen + "\n" + 
+				base + "-message='#{global." + ele.maxLenMsg + "}'\n";
+		}
+
+		if (ele.nullMsg) {
+			base = pre + "notEmpty";
+			s +=base + "='true'\n" +
+				base + "-message='#{global." + ele.nullMsg + "}'\n";
+		}
+
+		if (ele.validator) {
+			if (ele.validator == '$') {
+				base = pre + "numeric";
+				s +=base + "='true'\n" +
+					base + "-thousandsSeparator=','\n" + 
+					base + "-decimalSeparator='.'\n";
+			}
+		}
+
+		return s;
+	}
+
+	function eleConvertor(ele) {
+		var s = '';
+
+		if (ele.converter) {
+			var converter = Converters.findOne({id: ele.converter});
+			s += " converter='" + converter.name + "'\n";
+		}
+
+		return s;
+	}
 }
 
 if (Meteor.isServer) {
@@ -815,6 +955,11 @@ if (Meteor.isServer) {
 			Validators.insert({id: 'z', name: 'postalcode'});
 			Validators.insert({id: 't', name: 'einTax'});
 			Validators.insert({id: 'c', name: 'calendar', object: 'datetimepicker'});
+		}
+
+		//Converters.remove({});
+		if (Converters.find({}).count() === 0) {
+			Converters.insert({id: 1, name:'bigDecimalNumberConverter'});
 		}
 
 		Pages.remove({});

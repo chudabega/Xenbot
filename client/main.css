@@ -90,37 +90,42 @@ ul {
 }
 
 input {
-  border: none;
-  outline: none;
   background-color: #ecf0f1;
-  padding: 10px;
-  color: #942A57;
-  border: 0;
-  margin: 5px 0;
-  display: block;
+  padding: 4px;
+  color: black;
+  border: 1px solid gainsboro;
   width: 100%;
 }
 
 button {
-  background-color: #ecf0f1;
-  color: #942A57;
-  border: 0;
-  padding: 18px 12px;
-  margin-left: 6px;
-  cursor: pointer;
-  outline: none;
+    padding: 2px 15px;
+    margin: 10px 0;
+    margin-right: 15px;
+    color: #FFFFFF !important;
+    border-width: 1px !important;
+    border-color: #C0C0C0 !important;
+    font-size: 11pt !important;
+    font-weight: bold;
+    border-radius: 6px;
+    background-image: none !important;
+    box-shadow: 2px 3px 5px rgba(0,0,0,.5);
+    -webkit-box-shadow: 2px 3px 5px rgba(0,0,0,.5);
+    -moz-box-shadow: 2px 3px 5px rgba(0,0,0,.5);
 }
-
+button, button[disabled],
+button:focus {
+  background-color: #00B428;
+  background-image: none;
+}
 button:hover {
-  background-color: #e74c3c;
-  color: #ecf0f1;
+    background-color: #00D428;
+    cursor: pointer;
 }
-
-.gh-fork {
-  position: fixed;
-  top: 0;
-  right: 0;
-  border: 0;
+button[disabled]:hover {
+    background-color: #00B428;
+}
+button:active {
+    background-color: #00B428;
 }
 
 /* dragula-specific example page styles */
@@ -224,6 +229,7 @@ button:hover {
 .list label {
   text-align: left !important;
   padding-top: 0px !important;
+  margin-bottom: 0px;
 }
 .listEle {
   border: 1px solid gainsboro;

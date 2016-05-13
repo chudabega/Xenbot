@@ -6,12 +6,6 @@
   {{> dragList}}
 </body>
 
-<template name="hello">
-  <button>Click Me</button>
-  <p>You've pressed the button {{counter}} times.</p>
-</template>
-
-
 <template name="dragList">
   <div id='itemMenu' class="panel row">
     Element Menu
@@ -26,6 +20,7 @@
         <div class="element" type="{{type}}">{{name}}</div>
       {{/if}}
     {{/each}}
+    <button name='create'>Create</button>
   </div>
 
   <div class='list panel'>
